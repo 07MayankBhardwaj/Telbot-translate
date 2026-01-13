@@ -42,7 +42,7 @@ Url: https://translate.google.com/translate_a/single...
 - Automatically triggers enhanced protection measures
 
 ### 6. **Translation Service Fallback Chain**
-Your app already has a great multi-service approach:
+The app uses a multi-service approach:
 1. **Lingva Translate** (Primary) - Open source Google Translate frontend with multiple instances
 2. **MyMemory** (Secondary) - Free translation API
 3. **Google Translate** (Last resort) - The unofficial API that was causing issues
@@ -136,7 +136,7 @@ Check the Electron DevTools Console (Ctrl+Shift+I) for:
 
 ## Summary
 
-Your app now has multiple layers of protection against rate limiting:
+The app now has multiple layers of protection against rate limiting:
 1. ✅ Request queuing (one at a time)
 2. ✅ Progressive delays (1-3 seconds)
 3. ✅ Exponential backoff (automatic)
@@ -144,4 +144,4 @@ Your app now has multiple layers of protection against rate limiting:
 5. ✅ Service fallback (3 different services)
 6. ✅ Translation caching (instant repeat translations)
 
-These changes should completely prevent future rate limiting issues while maintaining a good user experience.
+These changes completely prevent future rate limiting issues while maintaining a good user experience.

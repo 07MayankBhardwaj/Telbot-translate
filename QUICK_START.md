@@ -2,7 +2,7 @@
 
 ## What Was Fixed
 
-Your translation app was getting blocked by Google Translate due to too many requests. I've implemented **6 layers of protection** to prevent this from happening again.
+The translation app was experiencing blocks from Google Translate due to too many requests. **6 layers of protection** have been implemented to prevent this from happening again.
 
 ## Changes Made
 
