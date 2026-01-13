@@ -43,3 +43,8 @@ electron-store/
 # Temporary files
 *.tmp
 *.temp
+
+# Large files
+*.zip
+*.rar
+*.7z
