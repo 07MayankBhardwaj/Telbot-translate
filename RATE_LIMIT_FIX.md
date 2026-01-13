@@ -4,7 +4,7 @@
 The application was experiencing IP blocks from Google Translate API due to too many requests in a short period. Error message:
 ```
 Error: Translation failed after 3 attempts: Too Many Requests
-IP: 49.38.4.65
+IP: xxx.xxx.xxx.xxx
 Url: https://translate.google.com/translate_a/single...
 ```
 
