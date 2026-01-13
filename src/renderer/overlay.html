@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TelBot - Live Translation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: rgba(13, 17, 23, 0.95);
+            --bg-secondary: rgba(22, 27, 34, 0.98);
+            --border-color: rgba(48, 54, 61, 0.8);
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-cyan: #00d9ff;
+            --accent-purple: #a855f7;
+            --accent-green: #3fb950;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .overlay-container {
+            width: 100%;
+            height: 100vh;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 12px 12px 0 0;
+            -webkit-app-region: drag;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title {
+            font-size: 12px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: var(--accent-green);
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 6px;
+            -webkit-app-region: no-drag;
+        }
+
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .control-btn.active {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        .control-btn.close:hover {
+            background: #f85149;
+            color: white;
+        }
+
+        .controls-bar {
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .lang-select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-primary);
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .capture-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: white;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .capture-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
+        }
+
+        .capture-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .interval-select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-primary);
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 8px;
+            gap: 8px;
+        }
+
+        .translation-panel {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 10px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            user-select: text;
+        }
+
+        .panel-content.original {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .panel-content.translated {
+            color: var(--text-primary);
+        }
+
+        .status-bar {
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            font-size: 10px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: se-resize;
+            -webkit-app-region: no-drag;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .copy-btn {
+            padding: 2px 6px;
+            border: none;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay-container">
+        <div class="overlay-header">
+            <div class="header-left">
+                <span>🌐</span>
+                <span class="header-title">TelBot Live</span>
+                <div class="live-indicator" id="liveIndicator" style="display: none;">
+                    <span class="live-dot"></span>
+                    <span>LIVE</span>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button class="control-btn" id="pinBtn" title="Pin on top">📌</button>
+                <button class="control-btn" id="opacityBtn" title="Toggle opacity">👁</button>
+                <button class="control-btn" id="backBtn" title="Back to main">↩</button>
+                <button class="control-btn close" id="closeBtn" title="Close">✕</button>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <div class="control-group">
+                <span class="control-label">Target:</span>
+                <select class="lang-select" id="targetLang">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ru">🇷🇺 Russian</option>
+                    <option value="zh-CN">🇨🇳 Chinese</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">Auto:</span>
+                <select class="interval-select" id="intervalSelect">
+                    <option value="0">Manual</option>
+                    <option value="3000">3 sec</option>
+                    <option value="5000">5 sec</option>
+                    <option value="10000">10 sec</option>
+                </select>
+            </div>
+
+            <button class="capture-btn" id="captureBtn">
+                📷 Capture & Translate
+            </button>
+
+            <button class="capture-btn" id="selectRegionBtn" style="background: rgba(255,255,255,0.1);">
+                ✂️ Select Region
+            </button>
+        </div>
+
+        <div class="content-area">
+            <div class="translation-panel">
+                <div class="panel-header">
+                    <span>📝 Original Text (OCR)</span>
+                    <button class="copy-btn" id="copyOriginal">Copy</button>
+                </div>
+                <div class="panel-content original" id="originalText">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📷</div>
+                        <div class="empty-state-text">Click "Capture & Translate" or select a region<br>to start live
+                            translation</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="translation-panel">
+                <div class="panel-header">
+                    <span>🌐 Translation</span>
+                    <button class="copy-btn" id="copyTranslation">Copy</button>
+                </div>
+                <div class="panel-content translated" id="translatedText">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌐</div>
+                        <div class="empty-state-text">Translation will appear here</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span id="statusText">Ready - Position this window next to Telegram</span>
+            <span id="lastUpdate">-</span>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        let autoInterval = null;
+        let captureRegion = null;
+
+        const elements = {
+            targetLang: document.getElementById('targetLang'),
+            intervalSelect: document.getElementById('intervalSelect'),
+            captureBtn: document.getElementById('captureBtn'),
+            selectRegionBtn: document.getElementById('selectRegionBtn'),
+            originalText: document.getElementById('originalText'),
+            translatedText: document.getElementById('translatedText'),
+            statusText: document.getElementById('statusText'),
+            lastUpdate: document.getElementById('lastUpdate'),
+            liveIndicator: document.getElementById('liveIndicator'),
+            pinBtn: document.getElementById('pinBtn'),
+            opacityBtn: document.getElementById('opacityBtn'),
+            backBtn: document.getElementById('backBtn'),
+            closeBtn: document.getElementById('closeBtn'),
+            copyOriginal: document.getElementById('copyOriginal'),
+            copyTranslation: document.getElementById('copyTranslation')
+        };
+
+        // Capture and translate
+        elements.captureBtn.onclick = async () => {
+            await captureAndTranslate();
+        };
+
+        async function captureAndTranslate() {
+            elements.statusText.textContent = 'Capturing screen...';
+            elements.captureBtn.disabled = true;
+
+            try {
+                const result = await ipcRenderer.invoke('capture-and-translate', {
+                    targetLang: elements.targetLang.value,
+                    region: captureRegion
+                });
+
+                if (result.success) {
+                    elements.originalText.innerHTML = `<div style="white-space: pre-wrap;">${escapeHtml(result.originalText)}</div>`;
+                    elements.translatedText.innerHTML = `<div style="white-space: pre-wrap;">${escapeHtml(result.translatedText)}</div>`;
+                    elements.lastUpdate.textContent = new Date().toLocaleTimeString();
+                    elements.statusText.textContent = 'Translation complete';
+                } else {
+                    elements.statusText.textContent = 'Error: ' + result.error;
+                }
+            } catch (error) {
+                elements.statusText.textContent = 'Error: ' + error.message;
+            } finally {
+                elements.captureBtn.disabled = false;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-capture interval
+        elements.intervalSelect.onchange = () => {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+
+            const interval = parseInt(elements.intervalSelect.value);
+            if (interval > 0) {
+                elements.liveIndicator.style.display = 'flex';
+                autoInterval = setInterval(captureAndTranslate, interval);
+                elements.statusText.textContent = `Auto-capture every ${interval / 1000}s`;
+            } else {
+                elements.liveIndicator.style.display = 'none';
+                elements.statusText.textContent = 'Manual mode';
+            }
+        };
+
+        // Select region
+        elements.selectRegionBtn.onclick = async () => {
+            elements.statusText.textContent = 'Select a region on screen...';
+            const region = await ipcRenderer.invoke('select-screen-region');
+            if (region) {
+                captureRegion = region;
+                elements.statusText.textContent = `Region selected: ${region.width}x${region.height}`;
+                elements.selectRegionBtn.style.background = 'var(--accent-green)';
+                elements.selectRegionBtn.textContent = '✓ Region Set';
+            }
+        };
+
+        // Copy buttons
+        elements.copyOriginal.onclick = () => {
+            const text = elements.originalText.textContent;
+            if (text && !text.includes('Click "Capture')) {
+                ipcRenderer.invoke('set-clipboard', text);
+                elements.copyOriginal.textContent = '✓';
+                setTimeout(() => elements.copyOriginal.textContent = 'Copy', 1500);
+            }
+        };
+
+        elements.copyTranslation.onclick = () => {
+            const text = elements.translatedText.textContent;
+            if (text && !text.includes('Translation will')) {
+                ipcRenderer.invoke('set-clipboard', text);
+                elements.copyTranslation.textContent = '✓';
+                setTimeout(() => elements.copyTranslation.textContent = 'Copy', 1500);
+            }
+        };
+
+        // Window controls
+        elements.closeBtn.onclick = () => ipcRenderer.send('close-overlay');
+        elements.backBtn.onclick = () => ipcRenderer.send('show-main-window');
+
+        let isPinned = true;
+        elements.pinBtn.onclick = () => {
+            isPinned = !isPinned;
+            ipcRenderer.send('toggle-overlay-pin', isPinned);
+            elements.pinBtn.classList.toggle('active', isPinned);
+        };
+
+        let currentOpacity = 0.95;
+        elements.opacityBtn.onclick = () => {
+            currentOpacity = currentOpacity === 0.95 ? 0.7 : 0.95;
+            ipcRenderer.send('set-overlay-opacity', currentOpacity);
+        };
+    </script>
+</body>
+
+</html>

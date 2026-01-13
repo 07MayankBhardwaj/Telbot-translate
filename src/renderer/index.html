@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TelBot Translate</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Custom Title Bar -->
+    <div class="title-bar" id="titleBar">
+      <div class="title-bar-left">
+        <div class="app-icon">🌐</div>
+        <span class="app-title">TelBot Translate</span>
+        <span class="version-badge">v1.0</span>
+      </div>
+      <div class="title-bar-controls">
+        <button class="title-btn settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+        <button class="title-btn minimize-btn" id="minimizeBtn" title="Minimize">─</button>
+        <button class="title-btn close-btn" id="closeBtn" title="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+      <button class="mode-btn active" id="readModeBtn" data-mode="read">
+        <span>📖 Read</span>
+        <span class="mode-hint">→ English</span>
+      </button>
+      <button class="mode-btn" id="writeModeBtn" data-mode="write">
+        <span>✍️ Write</span>
+        <span class="mode-hint">→ Target</span>
+      </button>
+      <button class="mode-btn live-mode-btn" id="liveModeBtn" data-mode="import" title="Import Telegram Chat Export">
+        <span>📁 Import</span>
+        <span class="mode-hint">Chat Export</span>
+      </button>
+    </div>
+
+    <!-- Language Selectors -->
+    <div class="language-bar">
+      <div class="lang-select-group">
+        <label>From</label>
+        <select id="sourceLang" class="lang-select">
+          <option value="auto">🔍 Auto Detect</option>
+          <option value="ru">🇷🇺 Russian</option>
+          <option value="zh-CN">🇨🇳 Chinese (Simplified)</option>
+          <option value="zh-TW">🇹🇼 Chinese (Traditional)</option>
+          <option value="uk">🇺🇦 Ukrainian</option>
+          <option value="ko">🇰🇷 Korean</option>
+          <option value="ja">🇯🇵 Japanese</option>
+          <option value="ar">🇸🇦 Arabic</option>
+          <option value="fa">🇮🇷 Persian</option>
+          <option value="hi">🇮🇳 Hindi</option>
+          <option value="de">🇩🇪 German</option>
+          <option value="fr">🇫🇷 French</option>
+          <option value="es">🇪🇸 Spanish</option>
+          <option value="pt">🇧🇷 Portuguese</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+      <button class="swap-btn" id="swapLangBtn" title="Swap Languages">⇄</button>
+      <div class="lang-select-group">
+        <label>To</label>
+        <select id="targetLang" class="lang-select">
+          <option value="en">🇬🇧 English</option>
+          <option value="ru">🇷🇺 Russian</option>
+          <option value="zh-CN">🇨🇳 Chinese (Simplified)</option>
+          <option value="zh-TW">🇹🇼 Chinese (Traditional)</option>
+          <option value="uk">🇺🇦 Ukrainian</option>
+          <option value="ko">🇰🇷 Korean</option>
+          <option value="ja">🇯🇵 Japanese</option>
+          <option value="ar">🇸🇦 Arabic</option>
+          <option value="fa">🇮🇷 Persian</option>
+          <option value="hi">🇮🇳 Hindi</option>
+          <option value="de">🇩🇪 German</option>
+          <option value="fr">🇫🇷 French</option>
+          <option value="es">🇪🇸 Spanish</option>
+          <option value="pt">🇧🇷 Portuguese</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Input Section -->
+      <div class="text-section input-section">
+        <div class="section-header">
+          <span class="section-label">Input</span>
+          <div class="section-actions">
+            <button class="action-btn" id="pasteBtn" title="Paste">📋</button>
+            <button class="action-btn" id="ocrBtn" title="OCR">📷</button>
+            <button class="action-btn" id="clearInputBtn" title="Clear">✕</button>
+          </div>
+        </div>
+        <textarea id="inputText" placeholder="Type or paste text to translate...
+
+💡 Tips:
+• Ctrl+Shift+T - Toggle window
+• Ctrl+Shift+R - Quick translate clipboard
+• Ctrl+Shift+O - OCR from image"></textarea>
+        <div class="char-count"><span id="inputCharCount">0</span> chars</div>
+      </div>
+
+      <!-- Translate Button -->
+      <button class="translate-btn" id="translateBtn">
+        <span class="btn-text">🌐 Translate</span>
+        <span class="btn-loader hidden">⏳</span>
+      </button>
+
+      <!-- Output Section -->
+      <div class="text-section output-section">
+        <div class="section-header">
+          <span class="section-label">Translation</span>
+          <div class="detected-lang hidden" id="detectedLang">
+            Detected: <span id="detectedLangValue">-</span>
+          </div>
+          <div class="section-actions">
+            <button class="action-btn" id="copyBtn" title="Copy">📋</button>
+          </div>
+        </div>
+        <div class="output-text" id="outputText">
+          <span class="placeholder-text">Translation will appear here...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="status-indicator" id="clipboardStatus">
+          <span class="indicator-dot active"></span>
+          <span>Clipboard active</span>
+        </span>
+      </div>
+      <div class="status-right">
+        <span class="hotkey-hint">Ctrl+Shift+T</span>
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel hidden" id="settingsPanel">
+      <div class="settings-header">
+        <h3>⚙️ Settings</h3>
+        <button class="close-settings-btn" id="closeSettingsBtn">✕</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label>Window Opacity</label>
+          <input type="range" id="opacitySlider" min="50" max="100" value="95">
+          <span id="opacityValue">95%</span>
+        </div>
+        <div class="setting-item">
+          <label>Always on Top</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="alwaysOnTopToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label>Clipboard Monitoring</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="clipboardMonitoringToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label>Auto-Translate on Copy</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoTranslateToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="shortcuts-info">
+        <h4>Shortcuts</h4>
+        <div>Ctrl+Shift+T → Toggle</div>
+        <div>Ctrl+Shift+R → Read mode</div>
+        <div>Ctrl+Shift+W → Write mode</div>
+        <div>Ctrl+Shift+O → OCR</div>
+      </div>
+    </div>
+
+    <!-- OCR Modal -->
+    <div class="modal hidden" id="ocrModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📷 OCR - Extract Text</h3>
+          <button class="modal-close-btn" id="closeOcrModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="ocr-options">
+            <button class="ocr-option-btn" id="ocrFromClipboard">
+              📋 From Clipboard
+            </button>
+            <button class="ocr-option-btn" id="ocrFromFile">
+              📁 From File
+            </button>
+          </div>
+          <div class="ocr-preview hidden" id="ocrPreview">
+            <img id="ocrPreviewImage" src="" alt="Preview">
+          </div>
+          <div class="ocr-progress hidden" id="ocrProgress">
+            <div class="progress-bar">
+              <div class="progress-fill" id="ocrProgressFill"></div>
+            </div>
+            <span id="ocrProgressText">Processing...</span>
+          </div>
+          <div class="ocr-language-select">
+            <label>OCR Language</label>
+            <select id="ocrLang">
+              <option value="rus">🇷🇺 Russian</option>
+              <option value="chi_sim">🇨🇳 Chinese</option>
+              <option value="eng">🇬🇧 English</option>
+              <option value="ukr">🇺🇦 Ukrainian</option>
+              <option value="kor">🇰🇷 Korean</option>
+              <option value="jpn">🇯🇵 Japanese</option>
+              <option value="ara">🇸🇦 Arabic</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn secondary" id="cancelOcrBtn">Cancel</button>
+          <button class="modal-btn primary" id="startOcrBtn" disabled>Extract</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+
+</html>

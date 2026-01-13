@@ -1,0 +1,39 @@
+{
+  "name": "telbot-translate",
+  "version": "1.0.0",
+  "description": "A powerful translation overlay for threat intelligence researchers",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "author": "TelBot",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.0",
+    "tesseract.js": "^5.0.4",
+    "electron-store": "^8.1.0",
+    "screenshot-desktop": "^1.15.0"
+  },
+  "build": {
+    "appId": "com.telbot.translate",
+    "productName": "TelBot Translate",
+    "win": {
+      "target": ["portable", "nsis"],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+      "artifactName": "TelBot-Translate-Portable.exe"
+    }
+  }
+}

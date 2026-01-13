@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TelBot - Chat Translator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0e1621;
+            --bg-secondary: #17212b;
+            --bg-message: #182533;
+            --bg-message-hover: #1e2c3a;
+            --border-color: #2b3945;
+            --text-primary: #f5f5f5;
+            --text-secondary: #8b9ba5;
+            --text-muted: #6b7c8a;
+            --accent-cyan: #6ab3f3;
+            --accent-purple: #a78bfa;
+            --accent-green: #4ade80;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            -webkit-app-region: drag;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .chat-details h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-details span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .header-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-message);
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-message-hover);
+            color: var(--text-primary);
+        }
+
+        .header-btn.primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: white;
+        }
+
+        .header-btn.primary:hover {
+            opacity: 0.9;
+        }
+
+        .header-btn.close:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .toolbar select {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-message);
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .progress-badge {
+            padding: 4px 10px;
+            background: rgba(74, 222, 128, 0.2);
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--accent-green);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .chat-panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .panel-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: var(--bg-message);
+            border-radius: 10px;
+            color: var(--text-muted);
+        }
+
+        /* Messages */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: var(--bg-primary);
+        }
+
+        .date-separator {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .date-separator span {
+            background: var(--bg-secondary);
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .message-group {
+            margin-bottom: 8px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2px;
+            max-width: 95%;
+        }
+
+        .message-bubble {
+            background: var(--bg-message);
+            border-radius: 12px;
+            padding: 8px 12px;
+            position: relative;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .message-bubble:hover {
+            background: var(--bg-message-hover);
+            border-color: var(--border-color);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message-text.original {
+            color: var(--text-secondary);
+        }
+
+        .message-text.translated {
+            color: var(--text-primary);
+        }
+
+        .message-text.pending {
+            color: var(--accent-orange);
+            font-style: italic;
+        }
+
+        /* Long message collapse */
+        .message-text.collapsed {
+            max-height: 150px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .message-text.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, var(--bg-message));
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: var(--accent-cyan);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .expand-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Empty State */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            max-width: 400px;
+        }
+
+        .upload-area {
+            width: 100%;
+            max-width: 450px;
+            padding: 48px 32px;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--accent-cyan);
+            background: rgba(106, 179, 243, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .instructions {
+            margin-top: 32px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            text-align: left;
+            max-width: 400px;
+        }
+
+        .instructions h4 {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-info {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .footer-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-message);
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .footer-btn:hover {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Author colors */
+        .author-1 {
+            color: #6ab3f3;
+        }
+
+        .author-2 {
+            color: #a78bfa;
+        }
+
+        .author-3 {
+            color: #4ade80;
+        }
+
+        .author-4 {
+            color: #f59e0b;
+        }
+
+        .author-5 {
+            color: #ec4899;
+        }
+
+        .author-6 {
+            color: #14b8a6;
+        }
+
+        .author-7 {
+            color: #f43f5e;
+        }
+
+        .author-8 {
+            color: #8b5cf6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-info">
+                <div class="chat-avatar" id="chatAvatar">💬</div>
+                <div class="chat-details">
+                    <h2 id="chatName">TelBot Chat Translator</h2>
+                    <span id="chatMeta">Upload a Telegram export to begin</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="backBtn">↩ Back</button>
+                <button class="header-btn close" id="closeBtn">✕</button>
+            </div>
+        </div>
+
+        <!-- Toolbar (hidden until file loaded) -->
+        <div class="toolbar hidden" id="toolbar">
+            <div class="toolbar-group">
+                <label>Translate to:</label>
+                <select id="targetLang">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ru">🇷🇺 Russian</option>
+                    <option value="zh-CN">🇨🇳 Chinese</option>
+                </select>
+            </div>
+
+            <button class="header-btn primary" id="translateAllBtn">
+                🌐 Translate All
+            </button>
+
+            <span class="progress-badge hidden" id="progressBadge">0 / 0</span>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📁</div>
+                <div class="empty-title">Import Telegram Chat Export</div>
+                <div class="empty-desc">
+                    Upload your exported Telegram chat (JSON format) and translate all messages instantly with proper
+                    formatting.
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">Drop result.json here or click to browse</div>
+                    <div class="upload-hint">Supports Telegram Desktop JSON export</div>
+                </div>
+
+                <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+                <div class="instructions">
+                    <h4>📋 How to export from Telegram:</h4>
+                    <ol>
+                        <li>Open Telegram Desktop</li>
+                        <li>Go to the chat/group you want to export</li>
+                        <li>Click ⋮ Menu → Export Chat History</li>
+                        <li>Select <strong>Machine-readable JSON</strong></li>
+                        <li>Click Export and wait for completion</li>
+                        <li>Upload the <strong>result.json</strong> file here</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Chat View (hidden until file loaded) -->
+            <div class="chat-panel hidden" id="originalPanel">
+                <div class="panel-header">
+                    <span class="panel-title">📝 Original</span>
+                    <span class="panel-badge" id="originalCount">0 messages</span>
+                </div>
+                <div class="messages-container" id="originalMessages"></div>
+            </div>
+
+            <div class="chat-panel hidden" id="translatedPanel">
+                <div class="panel-header">
+                    <span class="panel-title">🌐 Translated</span>
+                    <span class="panel-badge" id="translatedCount">0 / 0</span>
+                </div>
+                <div class="messages-container" id="translatedMessages"></div>
+            </div>
+        </div>
+
+        <!-- Footer (hidden until file loaded) -->
+        <div class="footer hidden" id="footer">
+            <span class="footer-info" id="footerInfo">Ready</span>
+            <div class="footer-actions">
+                <button class="footer-btn" id="exportJsonBtn">📥 Export JSON</button>
+                <button class="footer-btn" id="exportTextBtn">📄 Export TXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        let chatData = null;
+        let messages = [];
+        let authorColors = {};
+        let colorIndex = 0;
+
+        const elements = {
+            emptyState: document.getElementById('emptyState'),
+            uploadArea: document.getElementById('uploadArea'),
+            fileInput: document.getElementById('fileInput'),
+            toolbar: document.getElementById('toolbar'),
+            originalPanel: document.getElementById('originalPanel'),
+            translatedPanel: document.getElementById('translatedPanel'),
+            originalMessages: document.getElementById('originalMessages'),
+            translatedMessages: document.getElementById('translatedMessages'),
+            originalCount: document.getElementById('originalCount'),
+            translatedCount: document.getElementById('translatedCount'),
+            targetLang: document.getElementById('targetLang'),
+            translateAllBtn: document.getElementById('translateAllBtn'),
+            progressBadge: document.getElementById('progressBadge'),
+            footer: document.getElementById('footer'),
+            footerInfo: document.getElementById('footerInfo'),
+            chatName: document.getElementById('chatName'),
+            chatMeta: document.getElementById('chatMeta'),
+            backBtn: document.getElementById('backBtn'),
+            closeBtn: document.getElementById('closeBtn'),
+            exportJsonBtn: document.getElementById('exportJsonBtn'),
+            exportTextBtn: document.getElementById('exportTextBtn'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            loadingText: document.getElementById('loadingText')
+        };
+
+        // Author color assignment
+        function getAuthorColor(author) {
+            if (!authorColors[author]) {
+                colorIndex = (colorIndex % 8) + 1;
+                authorColors[author] = `author-${colorIndex}`;
+            }
+            return authorColors[author];
+        }
+
+        // File upload
+        elements.uploadArea.onclick = () => elements.fileInput.click();
+
+        elements.uploadArea.ondragover = (e) => {
+            e.preventDefault();
+            elements.uploadArea.classList.add('dragover');
+        };
+
+        elements.uploadArea.ondragleave = () => {
+            elements.uploadArea.classList.remove('dragover');
+        };
+
+        elements.uploadArea.ondrop = (e) => {
+            e.preventDefault();
+            elements.uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.json')) loadFile(file);
+        };
+
+        elements.fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) loadFile(file);
+        };
+
+        async function loadFile(file) {
+            showLoading('Loading chat data...');
+
+            try {
+                const text = await file.text();
+                chatData = JSON.parse(text);
+
+                // Parse Telegram format
+                if (chatData.messages) {
+                    messages = chatData.messages
+                        .filter(m => m.type === 'message' && m.text)
+                        .map(m => ({
+                            id: m.id,
+                            date: m.date,
+                            author: m.from || m.actor || 'Unknown',
+                            text: typeof m.text === 'string' ? m.text : extractText(m.text),
+                            translated: null
+                        }))
+                        .filter(m => m.text.trim().length > 0);
+                }
+
+                if (messages.length === 0) {
+                    alert('No text messages found in this file.');
+                    hideLoading();
+                    return;
+                }
+
+                // Update UI
+                elements.chatName.textContent = chatData.name || 'Imported Chat';
+                elements.chatMeta.textContent = `${messages.length} messages`;
+                elements.originalCount.textContent = `${messages.length} messages`;
+                elements.footerInfo.textContent = `Chat: ${chatData.name || file.name}`;
+
+                // Show panels
+                elements.emptyState.classList.add('hidden');
+                elements.toolbar.classList.remove('hidden');
+                elements.originalPanel.classList.remove('hidden');
+                elements.translatedPanel.classList.remove('hidden');
+                elements.footer.classList.remove('hidden');
+
+                renderMessages(elements.originalMessages, 'original');
+                renderMessages(elements.translatedMessages, 'translated');
+
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                alert('Error loading file: ' + error.message);
+            }
+        }
+
+        function extractText(textObj) {
+            if (typeof textObj === 'string') return textObj;
+            if (Array.isArray(textObj)) {
+                return textObj.map(t => typeof t === 'string' ? t : t.text || '').join('');
+            }
+            return '';
+        }
+
+        function formatDate(dateStr) {
+            try {
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+            } catch { return dateStr; }
+        }
+
+        function formatTime(dateStr) {
+            try {
+                return new Date(dateStr).toLocaleTimeString('en-US', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+            } catch { return ''; }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderMessages(container, type) {
+            let html = '';
+            let lastDate = '';
+
+            messages.forEach((m, i) => {
+                const msgDate = formatDate(m.date);
+
+                // Date separator
+                if (msgDate !== lastDate) {
+                    html += `<div class="date-separator"><span>${msgDate}</span></div>`;
+                    lastDate = msgDate;
+                }
+
+                const colorClass = getAuthorColor(m.author);
+                const text = type === 'translated'
+                    ? (m.translated || '⏳ Waiting for translation...')
+                    : m.text;
+                const textClass = type === 'translated'
+                    ? (m.translated ? 'translated' : 'pending')
+                    : 'original';
+
+                const isLong = text.length > 500;
+                const collapsedClass = isLong ? 'collapsed' : '';
+
+                html += `
+          <div class="message" data-id="${m.id}">
+            <div class="message-bubble">
+              <div class="message-header">
+                <span class="message-author ${colorClass}">${escapeHtml(m.author)}</span>
+                <span class="message-time">${formatTime(m.date)}</span>
+              </div>
+              <div class="message-text ${textClass} ${collapsedClass}" data-full="${isLong}">${escapeHtml(text)}</div>
+              ${isLong ? '<button class="expand-btn" onclick="toggleExpand(this)">Show more</button>' : ''}
+            </div>
+          </div>
+        `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Toggle expand for long messages
+        window.toggleExpand = function (btn) {
+            const textEl = btn.previousElementSibling;
+            if (textEl.classList.contains('collapsed')) {
+                textEl.classList.remove('collapsed');
+                btn.textContent = 'Show less';
+            } else {
+                textEl.classList.add('collapsed');
+                btn.textContent = 'Show more';
+            }
+        };
+
+        // Translate all - Sequential processing to avoid rate limits
+        elements.translateAllBtn.onclick = async () => {
+            const targetLang = elements.targetLang.value;
+            elements.translateAllBtn.disabled = true;
+            elements.translateAllBtn.textContent = '⏳ Translating...';
+            elements.progressBadge.classList.remove('hidden');
+
+            let completed = 0;
+            let errors = 0;
+            const total = messages.length;
+
+            // Process one message at a time to avoid rate limiting
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+
+                // Skip if already translated
+                if (msg.translated && !msg.translated.startsWith('[Error')) {
+                    completed++;
+                    continue;
+                }
+
+                try {
+                    const result = await ipcRenderer.invoke('translate-text', {
+                        text: msg.text,
+                        from: 'auto',
+                        to: targetLang
+                    });
+
+                    if (result.success) {
+                        msg.translated = result.text;
+                    } else {
+                        msg.translated = `[Error: ${result.error}]`;
+                        errors++;
+                    }
+                } catch (error) {
+                    msg.translated = `[Error: ${error.message}]`;
+                    errors++;
+                }
+
+                completed++;
+                elements.progressBadge.textContent = `${completed} / ${total}`;
+                elements.translatedCount.textContent = `${completed} / ${total}`;
+                elements.footerInfo.textContent = `Translating... ${completed}/${total}${errors > 0 ? ` (${errors} errors)` : ''}`;
+
+                // Update UI every 10 messages or on last message
+                if (completed % 10 === 0 || completed === total) {
+                    renderMessages(elements.translatedMessages, 'translated');
+                    elements.translatedMessages.scrollTop = elements.originalMessages.scrollTop;
+                }
+
+                // Small delay between requests (main process handles larger delays)
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            // Final render
+            renderMessages(elements.translatedMessages, 'translated');
+
+            elements.translateAllBtn.disabled = false;
+            elements.translateAllBtn.textContent = '🌐 Translate All';
+            elements.progressBadge.textContent = errors > 0 ? `⚠️ ${errors} errors` : '✅ Done';
+            elements.footerInfo.textContent = errors > 0
+                ? `⚠️ Translated ${total - errors}/${total} messages (${errors} failed)`
+                : `✅ Translated ${total} messages`;
+        };
+
+        // Sync scroll between panels
+        elements.originalMessages.onscroll = () => {
+            elements.translatedMessages.scrollTop = elements.originalMessages.scrollTop;
+        };
+        elements.translatedMessages.onscroll = () => {
+            elements.originalMessages.scrollTop = elements.translatedMessages.scrollTop;
+        };
+
+        // Export JSON
+        elements.exportJsonBtn.onclick = () => {
+            const data = messages.map(m => ({
+                author: m.author,
+                date: m.date,
+                original: m.text,
+                translated: m.translated || ''
+            }));
+            downloadFile('translated_chat.json', JSON.stringify(data, null, 2), 'application/json');
+        };
+
+        // Export TXT
+        elements.exportTextBtn.onclick = () => {
+            let txt = `Chat: ${chatData?.name || 'Exported Chat'}\n`;
+            txt += `Exported: ${new Date().toLocaleString()}\n`;
+            txt += '='.repeat(60) + '\n\n';
+
+            let lastDate = '';
+            messages.forEach(m => {
+                const date = formatDate(m.date);
+                if (date !== lastDate) {
+                    txt += `\n--- ${date} ---\n\n`;
+                    lastDate = date;
+                }
+
+                txt += `[${formatTime(m.date)}] ${m.author}:\n`;
+                txt += `Original: ${m.text}\n`;
+                if (m.translated) {
+                    txt += `Translated: ${m.translated}\n`;
+                }
+                txt += '\n';
+            });
+
+            downloadFile('translated_chat.txt', txt, 'text/plain');
+        };
+
+        function downloadFile(filename, content, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Window controls
+        elements.backBtn.onclick = () => ipcRenderer.send('show-main-window');
+        elements.closeBtn.onclick = () => ipcRenderer.send('close-chat-import');
+
+        function showLoading(text) {
+            elements.loadingText.textContent = text;
+            elements.loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            elements.loadingOverlay.classList.add('hidden');
+        }
+    </script>
+</body>
+
+</html>
